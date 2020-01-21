@@ -57,7 +57,7 @@ function readCode(blockNumber, codeNumber) {
                     else if (code.charAt(i) == "]") {
                         brac_count--;
                     }
-                    if (count == 0) {
+                    if (brac_count == 0) { // 1-21 오타 수정
                         brac_index = i;
                         // ]의 인덱스 찾기
                     }
@@ -339,7 +339,6 @@ function readCode(code) {
                     right_operand = readCode(right_operand);
                     if (left_operator == '+') {
                         result = left_operand + right_operand;
-                        // 이와 같은 형태로 수정할 것.
                     }
                     else if (left_operator == '-') {
                         result = left_operand - right_operand;
@@ -422,6 +421,7 @@ function readCode(code) {
                 return returnDoubleArray(_name, arr_index, arr_index2);
             }
             return returnArray(_name, arr_index);
+            
 
         }
         else {
@@ -525,9 +525,8 @@ var if_count = 0;
 var do_if = 0;
 // 조건문 체크하는 데 이용하는 변수
 
-var for_init = 0;
-// for문 초기화는 1번만 하기 때문에, 이를 확인하기 위한 변수
-var _id = -1; // 변수명은 계속 사용해야하므로, 표시
+var for_init = 0; // for문 초기화는 1번만 하기 때문에, 이를 확인하기 위한 변수
+var _id; // 블록단위로 변수가 사라지지 않도록 하기 위해서 전역변수로 선언
 
 function ifLoop(blockNumber, codeNumber) {
     // 조건문 or 반복문이 실행될 수 있는지 없는지 true, false로 반환
@@ -558,7 +557,7 @@ function ifLoop(blockNumber, codeNumber) {
                     var brac_open = code.indexOf("(");
                     var brac_close = code.indexOf(")");
                     var condition = code.substring(brac_open + 1, brac_close);
-                    condition = readCode(condition);
+                    condition = readCode(condition); // 얘는 처리한 값이 필요함.
                     if (condition == true) {
                         do_if++;
                         return true;
@@ -591,10 +590,11 @@ function ifLoop(blockNumber, codeNumber) {
             if (condition_arr[0].includes("int") || condition_arr[0].includes("long") || condition_arr[0].includes("float") || condition_arr[0].includes("double")) {
                 // 자료형이 포함되어있는가? => 생성해야 함.
                 var _equal = condition_arr[0].substring(0, condition_arr[0].indexOf("=")); // 등호로 나누기
-                _id = makeVariable(_equal); // 변수명을 반환받음.
-                condition_arr[0].replace(_equal, _id);
+                _id = makeVariable(_equal[0]); // 변수명을 반환받음. 1-21 오타 수정
+                condition_arr[0].replace(_equal[0], _id); // 1-21 오타 수정
 
             }
+            condition_arr[0] = condition_arr[0].trim(); // 혹시 있을 앞 뒤 공백 제거
             readCode(condition_arr[0]);
             for_init = 1; // 초기화를 했음을 표시
             var con_expr = condition_arr[1].trim(); // 앞 뒤에 있을 수 있는 공백 제거하기
