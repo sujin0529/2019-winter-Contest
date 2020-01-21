@@ -80,7 +80,7 @@ function readCode(blockNumber, codeNumber) {
                         else if (code.charAt(i) == "]") {
                             brac_count--;
                         }
-                        if (count == 0) {
+                        if (brac_count == 0) { // 1-21 수정
                             brac_index = i;
                             // ]의 인덱스 찾기
                         }
@@ -278,7 +278,7 @@ function readCode(code) {
                         break;
                     }
                 }
-                var left_operand = code.substring(count, operator_index);
+                var left_operand = code.substring(0, operator_index);
                 var right_operand = code.substring(operator_index + 1, code.length);
                 // 왼쪽 연산자를 기준으로 왼쪽과 오른쪽을 나눈다.
 
@@ -378,7 +378,7 @@ function readCode(code) {
                 else if (code.charAt(i) == "]") {
                     brac_count--;
                 }
-                if (brac_count == 0) {
+                if (brac_count == 0) { // 1-21 오타 수정
                     brac_index = i;
                     // ]의 인덱스 찾기
                 }
@@ -401,7 +401,7 @@ function readCode(code) {
                     else if (code.charAt(i) == "]") {
                         brac_count--;
                     }
-                    if (count == 0) {
+                    if (brac_count == 0) { // 1-21 수정
                         brac_index = i;
                         // ]의 인덱스 찾기
                     }
@@ -606,6 +606,7 @@ function ifLoop(blockNumber, codeNumber) {
             else {
                 for_init = 0;
                 // 하나의 for문 반복이 종료되었다는 의미이므로 for_init을 다시 0으로 초기화
+                deleteVariable(_id); // 반복문이 종료될 때 반복자로 사용했던 변수 제거
                 return false;
             }
         }
@@ -648,9 +649,27 @@ function ifLoop(blockNumber, codeNumber) {
                 // for문 반복 조건 성립 x
                 for_init = 0;
                 // 하나의 for문 반복이 종료되었다는 의미이므로 for_init을 다시 0으로 초기화
+                deleteVariable(_id); // 반복문이 종료될 때 반복자로 사용했던 변수 제거
                 return false;
             }
         }
     }
-}
+    else if(code.charAt(0)=='w'){
+        // while인 경우
 
+        var brac_open = code.indexOf("(");
+        var brac_close = code.lastIndexOf(")");
+        var op = code.substring(brac_open + 1, brac_close);
+
+        var can_run = readCode(op);
+        // 실행시킬 수 있는지 없는지를 확인
+        
+        if(can_run){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+
+}
