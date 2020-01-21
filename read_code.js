@@ -416,37 +416,12 @@ function readCode(code) {
                 // [N] 형태 또 제거하여 code에 저장
                 arr_index2 = readCode(arr_index2); // 함수로 다시보내 처리하도록 함.
             }
-            /*
-            var charF = code.charAt(0);
-            var charL = code.charAt(code.length - 2);
-            code = code.replaceAll("+", "");
-            code = code.replaceAll("-", "");w3
-*/
+
             var _name = code.replace(";", "");
             if (arr_index2 > 0) {
                 return returnDoubleArray(_name, arr_index, arr_index2);
             }
             return returnArray(_name, arr_index);
-            /*
-                            if (charF == "+" || charL == "+") {
-                                if (arr_index2 > 0) {
-                                    // 2차원 배열이라는 뜻
-                                    setDoubleArray(_name, arr_index, arr_index2, returnDoubleArray(_name, arr_index, arr_index2) + 1);
-                                    return returnDoubleArray(_name, arr_index, arr_index2);
-                                }
-                                setArray(_name, arr_index, returnArray(_name, arr_index) + 1);
-                            }
-                            else if (charF == "-" || charL == "-") {
-                                if (arr_index2 > 0) {
-                                    // 2차원 배열이라는 뜻
-                                    setDoubleArray(_name, arr_index, arr_index2, returnDoubleArray(_name, arr_index, arr_index2) - 1);
-                                    return returnDoubleArray(_name, arr_index, arr_index2);
-                                }
-                                setArray(_name, arr_index, returnArray(_name, arr_index) - 1);
-                            }else{
-            
-                            }
-                            return returnArray(_name, arr_index);*/
 
         }
         else {
@@ -550,6 +525,10 @@ var if_count = 0;
 var do_if = 0;
 // 조건문 체크하는 데 이용하는 변수
 
+var for_init = 0;
+// for문 초기화는 1번만 하기 때문에, 이를 확인하기 위한 변수
+var _id = -1; // 변수명은 계속 사용해야하므로, 표시
+
 function ifLoop(blockNumber, codeNumber) {
     // 조건문 or 반복문이 실행될 수 있는지 없는지 true, false로 반환
     var code = $("#codeNumber" + blockNumber + "_" + codeNumber).find("span")[0].innerText;
@@ -558,9 +537,9 @@ function ifLoop(blockNumber, codeNumber) {
         if (code.charAt(0) == 'i') {
             // if인 경우
             if_count++;
-            var blac_open = code.indexOf("(");
-            var blac_close = code.indexOf(")");
-            var condition = code.substring(blac_open + 1, blac_close);
+            var brac_open = code.indexOf("(");
+            var brac_close = code.indexOf(")");
+            var condition = code.substring(brac_open + 1, brac_close);
             condition = readCode(condition); // 조건문 얻어오기
             if (condition == true) {
                 do_if = if_count;
@@ -576,9 +555,9 @@ function ifLoop(blockNumber, codeNumber) {
             if (if_count > do_if) {
                 if (code.includes("(")) {
                     // 괄호가 있는가 -> else if
-                    var blac_open = code.indexOf("(");
-                    var blac_close = code.indexOf(")");
-                    var condition = code.substring(blac_open + 1, blac_close);
+                    var brac_open = code.indexOf("(");
+                    var brac_close = code.indexOf(")");
+                    var condition = code.substring(brac_open + 1, brac_close);
                     condition = readCode(condition);
                     if (condition == true) {
                         do_if++;
@@ -601,9 +580,73 @@ function ifLoop(blockNumber, codeNumber) {
             }
         }
     }
-    else if(code.charAt(0)=='f'){
+    else if (code.charAt(0) == 'f') {
         // for문인 경우
-        var brac_open = code.lastIndexOf(")")
+        var brac_open = code.indexOf("(");
+        var brac_close = code.lastIndexOf(")");
+        var op = code.substring(brac_open + 1, brac_close);
+        var condition_arr = op.split(";"); // 3개의 항을 모두 얻는다.
+        if (for_init == 0) {
+            // 초기화를 아직 하지 않았다는 뜻
+            if (condition_arr[0].includes("int") || condition_arr[0].includes("long") || condition_arr[0].includes("float") || condition_arr[0].includes("double")) {
+                // 자료형이 포함되어있는가? => 생성해야 함.
+                var _equal = condition_arr[0].substring(0, condition_arr[0].indexOf("=")); // 등호로 나누기
+                _id = makeVariable(_equal); // 변수명을 반환받음.
+                condition_arr[0].replace(_equal, _id);
+
+            }
+            readCode(condition_arr[0]);
+            for_init = 1; // 초기화를 했음을 표시
+            var con_expr = condition_arr[1].trim(); // 앞 뒤에 있을 수 있는 공백 제거하기
+            var can_run = readCode(con_expr);
+            if (can_run) {
+                // for문 반복 조건 성립
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        else {
+            // 초기화를 한 후에는 증감식을 먼저 작성한 후, 조건을 확인
+            var inc_expr = condition_arr[2].trim(); // 앞 뒤에 있을 수 있는 공백 제거하기 (증감식)
+            var temp_name = inc_expr.replace("++", "");
+            temp_name = temp_name.replace("--", "");
+            temp_name = temp_name.trim();
+            // 증감식일 경우에 사용할 변수의 임시 이름
+            var charF = inc_expr.charAt(0); // 맨 앞의 문자
+            var charL = inc_expr.charAt(inc_expr.length - 1); // 맨 뒤의 문자
+            if ((charF == "+") || (charF == "-") || (charL == "+") || (charL == "-")) {
+                // 우선 맨 앞의 문자가 연산자인지를 확인
+                if ((charF == inc_expr.charAt(1)) || (charL == inc_expr.charAt(inc_expr.length - 2))) {
+                    // 만약 앞이나 뒤에 동일한 연산자 반복인 경우 -> 단항 연산자
+                    if ((charF == "+") || (charL == "+")) {
+                        // 그 연산자가 +인 경우
+                        code = temp_name + "=" + temp_name + "+1"; // 변수=변수+1 형태 만들기
+                        readCode(code);
+                    }
+                    else if ((charF == "-") || (charL == "-")) {
+                        code = temp_name + "=" + temp_name + "-1"; // 변수=변수-1 형태 만들기
+                        readCode(code);
+                    }
+                }
+            }
+            else {
+                // 맨 앞의 부분이 연산자가 아닌 경우. 이 경우에는 단항 연산자가 아니므로 바로 readCode 처리 가능
+                readCode(inc_expr);
+            }
+
+            var con_expr = condition_arr[1].trim(); // 앞 뒤에 있을 수 있는 공백 제거하기 (조건식)
+            var can_run = readCode(con_expr);
+            if (can_run) {
+                // for문 반복 조건 성립
+                return true;
+            }
+            else {
+                for_init = 0;
+                return false;
+            }
+        }
     }
 }
 
