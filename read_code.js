@@ -421,7 +421,7 @@ function readCode(code) {
                 return returnDoubleArray(_name, arr_index, arr_index2);
             }
             return returnArray(_name, arr_index);
-            
+
 
         }
         else {
@@ -489,10 +489,114 @@ function makeVariable(code) {
             code = front + last;
         }
         if (type < 10) createVariable(code.replace(";", ""), type);	//id, type 순으로 기입
-        else if (type < 20) createArray(code.replace)
+        else if (type < 20) createArray(code.replace); // 1-22 다시 봐야할 곳 발견
         return code.replace(";", "");
     }
     return null;
+}
+
+function makeArray(variable, create) {
+    // 변수를 생성하는 코드
+    var _id;
+    var _double_arr = 0; // 2차원 배열인 경우에 표시할 플래그
+    var _row; // 행
+    var _col; // 열 <- 2차원 배열인 경우에만 사용
+    if (variable.includes("int") || variable.includes("long")) {
+        // 정수형 배열인 경우
+        _id = variable.replace("int","");
+        _id = _id.replace("long","");
+        _id = _id.replace("[]","");
+        if(_id.includes("[]")){
+            // 2차원 배열이라는 의미
+            _id = _id.replace("[]","");
+            _double_arr = 1;
+        }
+        create = create.replace("new","");
+        create = create.replace("int","");
+        create = create.replace("long","");
+        create = create.replace(";",""); 
+        // [사이즈] 또는 [사이즈][사이즈] 형태로 남도록 함.
+        if(_double_arr != 1){
+            // 1차원 배열이면
+            var size = create.replace("[","");
+            size = size.replace("]","");
+            _row = readCode(size); // [] 안에 있는 값 계산
+            createArray(variable, 10, _row);
+            return variable;
+            // 반환해야 하는 건 변수 명
+        }
+        else{
+            // 2차원 배열이면
+            create = create.trim(); // 혹시 모를 앞 뒤 공백 제거
+            create = create.replace("[","");
+            create = create.replace("]","");
+            var _brac = create.indexOf("[");
+            var size = create.substring(0, _brac); // 행 사이즈 찾은 것
+            _row = readCode(size); // [여기][] 계산한 것
+            create = create.replace(size, ""); // [사이즈] 형태로 남을 것
+            size = create.replace("[","");
+            size = size.replace("]","");
+            _col = readCode(size);
+            createDoubleArray(variable, 20, _row, _col);
+            return variable;
+            // 반환해야 하는 건 변수 명
+        }
+        
+
+    }
+    else if (variable.includes("float") || variable.includes("double")){
+        // 실수형 배열인 경우
+        variable = variable.replace("float","");
+        variable = variable.replace("double","");
+        variable = variable.replace("[]","");
+        if(variable.includes("[]")){
+            // 2차원 배열이라는 의미
+            variable = variable.replace("[]","");
+            _double_arr = 1;
+        }
+        create = create.replace("new","");
+        create = create.replace("float","");
+        create = create.replace("double","");
+        create = create.replace(";",""); 
+        // [사이즈] 또는 [사이즈][사이즈] 형태로 남도록 함.
+        if(_double_arr != 1){
+            // 1차원 배열이면
+            var size = create.replace("[","");
+            size = size.replace("]","");
+            _row = readCode(size); // [] 안에 있는 값 계산
+            createArray(variable, 11, _row);
+            return variable;
+            // 반환해야 하는 건 변수 명
+        }
+        else{
+            // 2차원 배열이면
+            create = create.trim(); // 혹시 모를 앞 뒤 공백 제거
+            create = create.replace("[","");
+            create = create.replace("]","");
+            var _brac = create.indexOf("[");
+            var size = create.substring(0, _brac); // 행 사이즈 찾은 것
+            _row = readCode(size); // [여기][] 계산한 것
+            create = create.replace(size, ""); // [사이즈] 형태로 남을 것
+            size = create.replace("[","");
+            size = size.replace("]","");
+            _col = readCode(size);
+            createDoubleArray(variable, 21, _row, _col);
+            return variable;
+            // 반환해야 하는 건 변수 명
+        }
+
+    }
+    else if (variable.includes("char")){
+        // 문자형 배열인 경우
+    }
+    else{
+        document.write("error");
+    }
+    
+}
+
+function makeStack(variable, create) {
+
 }
 
 //문자 입력시 상수, 변수 판단 후 값 반환
@@ -654,7 +758,7 @@ function ifLoop(blockNumber, codeNumber) {
             }
         }
     }
-    else if(code.charAt(0)=='w'){
+    else if (code.charAt(0) == 'w') {
         // while인 경우
 
         var brac_open = code.indexOf("(");
@@ -663,11 +767,11 @@ function ifLoop(blockNumber, codeNumber) {
 
         var can_run = readCode(op);
         // 실행시킬 수 있는지 없는지를 확인
-        
-        if(can_run){
+
+        if (can_run) {
             return true;
         }
-        else{
+        else {
             return false;
         }
     }
