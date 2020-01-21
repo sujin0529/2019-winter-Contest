@@ -604,6 +604,8 @@ function ifLoop(blockNumber, codeNumber) {
                 return true;
             }
             else {
+                for_init = 0;
+                // 하나의 for문 반복이 종료되었다는 의미이므로 for_init을 다시 0으로 초기화
                 return false;
             }
         }
@@ -643,7 +645,9 @@ function ifLoop(blockNumber, codeNumber) {
                 return true;
             }
             else {
+                // for문 반복 조건 성립 x
                 for_init = 0;
+                // 하나의 for문 반복이 종료되었다는 의미이므로 for_init을 다시 0으로 초기화
                 return false;
             }
         }
