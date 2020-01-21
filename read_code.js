@@ -496,25 +496,27 @@ function makeVariable(code) {
 }
 
 function makeArray(variable, create) {
-    // 변수를 생성하는 코드
-    var _id;
+    // 배열을 생성하는 코드
+    // var _id;
     var _double_arr = 0; // 2차원 배열인 경우에 표시할 플래그
     var _row; // 행
     var _col; // 열 <- 2차원 배열인 경우에만 사용
     if (variable.includes("int") || variable.includes("long")) {
         // 정수형 배열인 경우
-        _id = variable.replace("int","");
-        _id = _id.replace("long","");
-        _id = _id.replace("[]","");
-        if(_id.includes("[]")){
+        variable = variable.replace("int","");
+        variable = variable.replace("long","");
+        variable = variable.replace("[]","");
+        if(variable.includes("[]")){
             // 2차원 배열이라는 의미
-            _id = _id.replace("[]","");
+            variable = variable.replace("[]","");
             _double_arr = 1;
         }
+        variable = variable.replaceAll(" ",""); // 완전히 변수만 남게
         create = create.replace("new","");
         create = create.replace("int","");
         create = create.replace("long","");
-        create = create.replace(";",""); 
+        create = create.replace(";","");
+        create = create.replaceAll(" ",""); // 혹시 모를 앞 뒤 공백 제거
         // [사이즈] 또는 [사이즈][사이즈] 형태로 남도록 함.
         if(_double_arr != 1){
             // 1차원 배열이면
@@ -527,7 +529,6 @@ function makeArray(variable, create) {
         }
         else{
             // 2차원 배열이면
-            create = create.trim(); // 혹시 모를 앞 뒤 공백 제거
             create = create.replace("[","");
             create = create.replace("]","");
             var _brac = create.indexOf("[");
@@ -554,10 +555,12 @@ function makeArray(variable, create) {
             variable = variable.replace("[]","");
             _double_arr = 1;
         }
+        variable = variable.replaceAll(" ",""); // 완전히 변수만 남게
         create = create.replace("new","");
         create = create.replace("float","");
         create = create.replace("double","");
-        create = create.replace(";",""); 
+        create = create.replace(";","");
+        create = create.replaceAll(" ",""); // 혹시 모를 앞 뒤 공백 제거
         // [사이즈] 또는 [사이즈][사이즈] 형태로 남도록 함.
         if(_double_arr != 1){
             // 1차원 배열이면
@@ -569,8 +572,7 @@ function makeArray(variable, create) {
             // 반환해야 하는 건 변수 명
         }
         else{
-            // 2차원 배열이면
-            create = create.trim(); // 혹시 모를 앞 뒤 공백 제거
+            // 2차원 배열이면  
             create = create.replace("[","");
             create = create.replace("]","");
             var _brac = create.indexOf("[");
@@ -588,6 +590,43 @@ function makeArray(variable, create) {
     }
     else if (variable.includes("char")){
         // 문자형 배열인 경우
+        variable = variable.replace("char","");
+        variable = variable.replace("[]","");
+        if(variable.includes("[]")){
+            // 2차원 배열이라는 의미
+            variable = variable.replace("[]","");
+            _double_arr = 1;
+        }
+        variable = variable.replaceAll(" ",""); // 완전히 변수만 남게
+        create = create.replace("new","");
+        create = create.replace("char","");
+        create = create.replace(";","");
+        create = create.replaceAll(" ",""); // 혹시 모를 앞 뒤 공백 제거
+        // [사이즈] 또는 [사이즈][사이즈] 형태로 남도록 함.
+        if(_double_arr != 1){
+            // 1차원 배열이면
+            var size = create.replace("[","");
+            size = size.replace("]","");
+            _row = readCode(size); // [] 안에 있는 값 계산
+            createArray(variable, 13, _row);
+            return variable;
+            // 반환해야 하는 건 변수 명
+        }
+        else{
+            // 2차원 배열이면  
+            create = create.replace("[","");
+            create = create.replace("]","");
+            var _brac = create.indexOf("[");
+            var size = create.substring(0, _brac); // 행 사이즈 찾은 것
+            _row = readCode(size); // [여기][] 계산한 것
+            create = create.replace(size, ""); // [사이즈] 형태로 남을 것
+            size = create.replace("[","");
+            size = size.replace("]","");
+            _col = readCode(size);
+            createDoubleArray(variable, 23, _row, _col);
+            return variable;
+            // 반환해야 하는 건 변수 명
+        }
     }
     else{
         document.write("error");
@@ -596,6 +635,17 @@ function makeArray(variable, create) {
 }
 
 function makeStack(variable, create) {
+    variable = variable.replace("Stack","");
+    variable = variable.replaceAll(" ",""); // 공백 제거하여 객체명만 남게
+    create = create.replace("new","");
+    create = create.replace("Stack","");
+    create = create.replace(";","");
+    create = create.replaceAll(" ","");
+    create = create.replace("(","");
+    create = create.replace(")",""); // 할당하고자 하는 스택의 크기만 남음
+    create = readCode(create);
+    createStack(variable, create);
+    return variable;
 
 }
 
