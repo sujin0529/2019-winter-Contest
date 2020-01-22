@@ -1,35 +1,39 @@
 //html을 통해 기본 코드를 해석하는 메소드
-function readCode(blockNumber, codeNumber) {
+function readMainCode(blockNumber, codeNumber) {
+    console.log("통코드 들어옴");
     //코드 타입 확인
     var type = $("#codeNumber" + blockNumber + "_" + codeNumber).find("input")[0].value;    //코드를 불러온다
 
     var code = $("#codeNumber" + blockNumber + "_" + codeNumber).find("span")[0].innerText;
+    code = ""+code;
     var haveEqual = code.split("=");
-    if (haveEqual.length != 1) {    //등호가 있는 경우
+    console.log(haveEqual.length);
+    if (haveEqual.length > 1) {    //등호가 있는 경우
         var slice = code.indexOf("=");
         var temp = code.substring(0, slice);
-        var temp_value = computeToInput(code.substring(slice)); //메소드를 이용하여 뒤의 값들 연산
+        var temp_value = readCode(code.substring(slice+1)); //메소드를 이용하여 뒤의 값들 연산
+        console.log("대입할 값 : "+temp_value);
         temp = temp.trim(); //좌우 공백제거
         var lastChar = temp.substring(temp.length - 1);   //가장 오른쪽 문자를 임시로 가져옴
         if (lastChar == "+" || lastChar == "-" || lastChar == "*" || lastChar == "/" || lastChar == "%") {    //연산자 유무 확인
             temp = temp.replace(lastChar, "");  //왼쪽 항에서 연산자를 삭제
-            temp = temp.temp.trim();
-            temp_value = computeToInput(temp + lastChar + temp_value);  //다시 계산을 수행하여 임시 저장소에 덮어쓰기
+            temp = temp.trim();
+            temp_value = readCode(temp + lastChar + temp_value);  //다시 계산을 수행하여 임시 저장소에 덮어쓰기
         }
-        var token = code.split(" ");
+        var token = temp.split(" ");
         if (token.length > 1) {
-            code = makeVariable(code);
-            if (code == null) return null;   //특수한 경우로, 아직 미완성처리이거나 오류
+            temp = makeVariable(temp);  
+            if (temp == null) return null;   //특수한 경우로, 아직 미완성처리이거나 오류
         }
-        setVariable(code, temp_value);
-        return code;
+        setVariable(temp, temp_value);
+        return temp;
     }
     //등호가 없는 경우
     var token = code.split(" ");
     if (token.length > 1) {    //처음 선언하는 경우(앞에 타입이 있음)
         return makeVariable(code);
     } else {
-        code = code.replaceAll(" ", ""); // 공백 제거
+        code = code.replace(/ /gi, ""); // 공백 제거
         var dot = code.split(".");
         if (dot.length > 1) {
             for (var i = 1; i < dot.length; i++) {
@@ -47,8 +51,8 @@ function readCode(blockNumber, codeNumber) {
             var brac_index = 0;
             var arr_index2 = -1; // -1이 아닌 경우에는 2차원 배열이라는 뜻.
             var ex_name = code.substring(0, code.indexOf("["));
-            ex_name = ex_name.replaceAll("+", "");
-            ex_name = ex_name.replaceAll("-", "");
+            ex_name = ex_name.replaceAll(/+/g, "");
+            ex_name = ex_name.replaceAll(/-/g, "");
             // 배열의 이름 임시 저장.
 
             for (var i = 0; i < code.length; i++) {
@@ -98,45 +102,45 @@ function readCode(blockNumber, codeNumber) {
 
             var charF = code.charAt(0);
             var charL = code.charAt(code.length - 2);
-            code = code.replaceAll("+", "");
-            code = code.replaceAll("-", "");
+            code = code.replace(/[+]/gi, "");
+            code = code.replace(/[-]/gi, "");
 
             var _name = code.replace(";", "");
 
             if (charF == "+" || charL == "+") {
                 if (arr_index2 > 0) {
                     // 2차원 배열이라는 뜻
-                    setDoubleArray(_name, arr_index, arr_index2, returnDoubleArray(_name, arr_index, arr_index2) + 1);
-                    return _name;
+                    setDoubleArray(_name, arr_index, arr_index2, returnDoubleValue(_name, arr_index, arr_index2) + 1);
+                    return getValue(returnDoubleValue(_name, arr_index, arr_index2));
                 }
-                setArray(_name, arr_index, returnArray(_name, arr_index) + 1);
+                setArray(_name, arr_index, returnValue(_name, arr_index) + 1);
             }
             else if (charF == "-" || charL == "-") {
                 if (arr_index2 > 0) {
                     // 2차원 배열이라는 뜻
-                    setDoubleArray(_name, arr_index, arr_index2, returnDoubleArray(_name, arr_index, arr_index2) - 1);
-                    return _name;
+                    setDoubleArray(_name, arr_index, arr_index2, returnDoubleValue(_name, arr_index, arr_index2) - 1);
+                    return getValue(returnDoubleValue(_name, arr_index, arr_index2));
                 }
-                setArray(_name, arr_index, returnArray(_name, arr_index) - 1);
+                setArray(_name, arr_index, returnValue(_name, arr_index) - 1);
             }
-            return _name;
+            return getValue(returnValue(_name, arr_index));
         }
         else {
             var charF = code.charAt(0);
             var charL = code.charAt(code.length - 2);
             // 문자열 앞 뒤 문자 임시 저장
-            code = code.replaceAll("+", "");
-            code = code.replaceAll("-", "");
+            code = code.replace(/[+]/gi, "");
+            code = code.replace(/[-]/gi, "");
             // 두 가지 연산자에 대해서 코드 줄에서 모두 제거
             var _name = code.replace(";", "");
             // 변수 이름 _name
             if (charF == "+" || charL == "+") {
-                setValue(_name, returnValue(_name) + 1); // 값을 갖고와서 1을 증가시켜 새로 설정. _name은 변수의 이름
+                setVariable(_name, getValue(_name)+1); // 값을 갖고와서 1을 증가시켜 새로 설정. _name은 변수의 이름
             }
             else if (charF == "-" || charL == "-") {
-                setValue(_name, returnValue(_name) - 1); // 값을 갖고와서 1을 감소시켜 새로 설정. _name은 변수의 이름
+                setVariable(_name, getValue(_name)-1); // 값을 갖고와서 1을 감소시켜 새로 설정. _name은 변수의 이름
             }
-            return _name;
+            return getValue(_name);
 
         }
     }
@@ -144,28 +148,30 @@ function readCode(blockNumber, codeNumber) {
 
 //문자열을 통해 코드 해석하는 메소드
 function readCode(code) {
+    console.log("readCode() 호출");
+    code = ""+code;
     var haveEqual = code.split("=");
     if (haveEqual.length != 1) {    //등호가 있는 경우
         var slice = code.indexOf("=");
         var temp = code.substring(0, slice);
 
-        if (code.indexOf(slice + 1) == "=" || code.indexOf(slice - 1) == ">"
-            || code.indexOf(slice - 1) == "<" || code.indexOf(slice - 1) == "!") { //비교연산자인 경우 처리 안함
+        if (code.charAt(slice + 1) == "=" || code.charAt(slice - 1) == ">"
+            || code.charAt(slice - 1) == "<" || code.charAt(slice - 1) == "!") { //비교연산자인 경우 처리 안함
         } else {
-            var temp_value = computeToInput(code.substring(slice)); //메소드를 이용하여 뒤의 값들 연산
+            var temp_value = readCode(code.substring(slice+1)); //메소드를 이용하여 뒤의 값들 연산
             temp = temp.trim(); //좌우 공백제거
             var lastChar = temp.substring(temp.length - 1);   //가장 오른쪽 문자를 임시로 가져옴
             if (lastChar == "+" || lastChar == "-" || lastChar == "*" || lastChar == "/" || lastChar == "%") {    //연산자 유무 확인
                 temp = temp.replace(lastChar, "");  //왼쪽 항에서 연산자를 삭제
                 temp = temp.temp.trim();
-                temp_value = computeToInput(temp + lastChar + temp_value);  //다시 계산을 수행하여 임시 저장소에 덮어쓰기
+                temp_value = readCode(temp + lastChar + temp_value);  //다시 계산을 수행하여 임시 저장소에 덮어쓰기
             }
-            var token = code.split(" ");
+            var token = temp.split(" ");
             if (token.length > 1) {
-                code = makeVariable(code);
-                if (code == null) return null;   //특수한 경우로, 아직 미완성처리이거나 오류
+                temp = makeVariable(temp);
+                if (temp == null) return null;   //특수한 경우로, 아직 미완성처리이거나 오류
             }
-            setVariable(code, temp_value);
+            setVariable(temp, temp_value);
             return temp_value;
         }
     }
@@ -193,12 +199,12 @@ function readCode(code) {
             //숫자로 변환하여 값 대체
             var front = code.substring(0, start);
             var tail = temp_code.substring(end + 1);
-            code = front + parseInt(tempChar) + tail;
+            code = front + tempChar.charCodeAt(0) + tail;
         } else {
             break;
         }
     }
-    code.replaceAll(" ", "");
+    code.replace(/ /gi, "");
     while (true) {
         if (code.includes("(")) {         //괄호가 존재하는가?
             var start = code.indexOf("(");
@@ -242,24 +248,29 @@ function readCode(code) {
         var first = readCode(code.substring(0, bigger));
         if (code.includes("=")) {
             var second = readCode(code.substring(bigger + 2));
-            return first >= second;
+            //return first >= second;
+            return getValue(first) >= getValue(second);
         }
         var second = readCode(code.substring(bigger + 1));
-        return first > second;
+        //return first > second;
+        return getValue(first) > getValue(second);
     } else if (code.includes("<")) {
         var smaller = code.indexOf("<");
         var first = readCode(code.substring(0, smaller));
         if (code.includes("=")) {
             var second = readCode(code.substring(smaller + 2));
-            return first <= second;
+           // return first <= second;
+            return getValue(first) <= getValue(second);  
         }
         var second = readCode(code.substring(smaller + 1));
-        return first < second;
+        //return first < second;
+        console.log(getValue(first)+", "+getValue(second));
+        return getValue(first) < getValue(second);
     } else if (code.includes("==")) {
         var equal = code.indexOf("==");
         var first = code.substring(0, equal);
         var second = code.substring(equal + 2);
-        return first == second;
+        return getValue(first) == getValue(second);
     }
     if (code === "true") return true;
     if (code === "false") return false;
@@ -286,7 +297,7 @@ function readCode(code) {
             for (var i = 0; i < right_operand.length; i++) {
                 // 오른쪽에도 연산자가 있는지를 확인
                 var find_op = right_operand.charAt(i);
-                if (find_op == '+' || find_op == '-' || find_op == '/' || find_op == '*' || lfind_op == '%') {
+                if (find_op == '+' || find_op == '-' || find_op == '/' || find_op == '*' || find_op == '%') {
                     right_operator = find_op;
                     break;
                 }
@@ -368,8 +379,8 @@ function readCode(code) {
         var brac_index = 0;
         var arr_index2 = -1; // -1이 아닌 경우에는 2차원 배열이라는 뜻.
         var ex_name = code.substring(0, code.indexOf("["));
-        ex_name = ex_name.replaceAll("+", "");
-        ex_name = ex_name.replaceAll("-", "");
+        ex_name = ex_name.replace(/[+]/gi, "");
+        ex_name = ex_name.replace(/[-]/gi, "");
         // 배열의 이름 임시 저장.
 
         for (var i = 0; i < code.length; i++) {
@@ -443,13 +454,15 @@ function readCode(code) {
             setValue(_name, returnValue(_name) - 1); // 값을 갖고와서 1을 감소시켜 새로 설정. _name은 변수의 이름
         }
         return returnValue(_name);*/
-
+        console.log(code);
+        return getValue(code);
     }
     return null;
 }
 
 //타입이 저장되어 있는 문자열의 경우 
 function makeVariable(code) {
+    console.log("makeVariable() 호출");
     var token = code.split(" ");
     var type = -1;  //타입에 대한 정보
     var typeString = "";    //타입의 문자열
@@ -479,8 +492,8 @@ function makeVariable(code) {
         document.write("error");
     }
     if (type >= 0) {	//타입 판단 성공 시
-        code.replaceAll(" ", "");	//공백 제거
-        code.replace(typeString, "");	//타입 문자열 제거
+        code = code.replace(/ /gi, "");	//공백 제거
+        code = code.replace(typeString, "");	//타입 문자열 제거
         while (code.indexOf("[") != -1) {                   //1-19 오타 수정
             type += 10;
             var temp = code.indexOf("[");                   //1-19 오타 수정
@@ -511,12 +524,12 @@ function makeArray(variable, create) {
             variable = variable.replace("[]", "");
             _double_arr = 1;
         }
-        variable = variable.replaceAll(" ", ""); // 완전히 변수만 남게
+        variable = variable.replace(/ /gi, ""); // 완전히 변수만 남게
         create = create.replace("new", "");
         create = create.replace("int", "");
         create = create.replace("long", "");
         create = create.replace(";", "");
-        create = create.replaceAll(" ", ""); // 혹시 모를 앞 뒤 공백 제거
+        create = create.replace(/ /gi, ""); // 혹시 모를 앞 뒤 공백 제거
         // [사이즈] 또는 [사이즈][사이즈] 형태로 남도록 함.
         if (_double_arr != 1) {
             // 1차원 배열이면
@@ -555,12 +568,12 @@ function makeArray(variable, create) {
             variable = variable.replace("[]", "");
             _double_arr = 1;
         }
-        variable = variable.replaceAll(" ", ""); // 완전히 변수만 남게
+        variable = variable.replace(/ /gi, ""); // 완전히 변수만 남게
         create = create.replace("new", "");
         create = create.replace("float", "");
         create = create.replace("double", "");
         create = create.replace(";", "");
-        create = create.replaceAll(" ", ""); // 혹시 모를 앞 뒤 공백 제거
+        create = create.replace(/ /gi, ""); // 혹시 모를 앞 뒤 공백 제거
         // [사이즈] 또는 [사이즈][사이즈] 형태로 남도록 함.
         if (_double_arr != 1) {
             // 1차원 배열이면
@@ -597,11 +610,11 @@ function makeArray(variable, create) {
             variable = variable.replace("[]", "");
             _double_arr = 1;
         }
-        variable = variable.replaceAll(" ", ""); // 완전히 변수만 남게
+        variable = variable.replace(/ /gi, ""); // 완전히 변수만 남게
         create = create.replace("new", "");
         create = create.replace("char", "");
         create = create.replace(";", "");
-        create = create.replaceAll(" ", ""); // 혹시 모를 앞 뒤 공백 제거
+        create = create.replace(/ /gi, ""); // 혹시 모를 앞 뒤 공백 제거
         // [사이즈] 또는 [사이즈][사이즈] 형태로 남도록 함.
         if (_double_arr != 1) {
             // 1차원 배열이면
@@ -636,11 +649,11 @@ function makeArray(variable, create) {
 
 function makeStack(variable, create) {
     variable = variable.replace("Stack", "");
-    variable = variable.replaceAll(" ", ""); // 공백 제거하여 객체명만 남게
+    variable = variable.replace(/ /gi, ""); // 공백 제거하여 객체명만 남게
     create = create.replace("new", "");
     create = create.replace("Stack", "");
     create = create.replace(";", "");
-    create = create.replaceAll(" ", "");
+    create = create.replace(/ /gi, "");
     create = create.replace("(", "");
     create = create.replace(")", ""); // 할당하고자 하는 스택의 크기만 남음
     create = readCode(create);
@@ -652,13 +665,20 @@ function makeStack(variable, create) {
 //문자 입력시 상수, 변수 판단 후 값 반환
 var number = /^[0-9]+$/;
 function getValue(string) {
-    if (!number.test(string.charAt(0))) {  //변수인가?
+    console.log("getValue() 호출");
+    string = ""+string;
+    string = string.trim();
+    string = string.replace(";", "");
+
+    if (!number.test(string.substring(0, 1))) {  //변수인가?
         if (string.includes(".")) {   //필드 혹은 메소드인가?
 
         } else {
-            var type = returnType(string);
-            if (type < 10) {        //배열 X
-                return returnValue(string);
+            var type = parseInt(returnType(string));
+            if(type==-1){
+                return string;
+            }else if (type < 10) {        //배열 X
+                string = V_returnValue(string);
             } else if (type < 20) {  //1차원 배열
 
             } else if (type < 30) {  //2차원 배열
@@ -667,11 +687,10 @@ function getValue(string) {
 
             }
         }
-    } else {      //숫자일 때
-        if (string.includes(".")) return parseFloat(string);
-        else parseInt(string);
-    }
-    return null;
+    }     //숫자일 때
+    if (string.includes(".")) return parseFloat(string);
+    else return parseInt(string);
+    
 }
 
 
@@ -693,7 +712,9 @@ function ifLoop(blockNumber, codeNumber) {
             var brac_open = code.indexOf("(");
             var brac_close = code.indexOf(")");
             var condition = code.substring(brac_open + 1, brac_close);
+            console.log(condition);
             condition = readCode(condition); // 조건문 얻어오기
+            console.log("condition"+condition);
             if (condition == true) {
                 do_if = if_count;
                 return true;
@@ -744,15 +765,23 @@ function ifLoop(blockNumber, codeNumber) {
             if (condition_arr[0].includes("int") || condition_arr[0].includes("long") || condition_arr[0].includes("float") || condition_arr[0].includes("double")) {
                 // 자료형이 포함되어있는가? => 생성해야 함.
                 var _equal = condition_arr[0].substring(0, condition_arr[0].indexOf("=")); // 등호로 나누기
-                _id = makeVariable(_equal[0]); // 변수명을 반환받음. 1-21 오타 수정
-                condition_arr[0].replace(_equal[0], _id); // 1-21 오타 수정
+                _id = makeVariable(_equal); // 변수명을 반환받음. 1-21 오타 수정
+                condition_arr[0] = condition_arr[0].replace(_equal, _id); // 1-21 오타 수정
+                for_init = 1; // 초기화를 했음을 표시
 
             }
-            condition_arr[0] = condition_arr[0].trim(); // 혹시 있을 앞 뒤 공백 제거
-            readCode(condition_arr[0]);
-            for_init = 1; // 초기화를 했음을 표시
+            else{
+                condition_arr[0] = condition_arr[0].trim(); // 혹시 있을 앞 뒤 공백 제거
+                readCode(condition_arr[0]);
+                for_init = 1; // 초기화를 했음을 표시
+            }
+            console.log("condition_arr[0] : "+condition_arr[0]);
+            console.log("condition_arr[1] : "+condition_arr[1]);
+            console.log("condition_arr[2] : "+condition_arr[2]);
+            
             var con_expr = condition_arr[1].trim(); // 앞 뒤에 있을 수 있는 공백 제거하기
             var can_run = readCode(con_expr);
+            console.log(can_run);
             if (can_run) {
                 // for문 반복 조건 성립
                 return true;
